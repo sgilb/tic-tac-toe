@@ -3,23 +3,30 @@ function GameBoard() {
   const columns = 3;
   const board = [];
 
-  // Populate board with empty cell values
-  for (let i = 0; i < rows; i++) {
-    board[i] = [];
-    for (let j = 0; j < columns; j++) {
-      board[i].push(null);
-    }
+  // Populate board with blank values
+  for (let i = 0; i < rows * columns; i++) {
+    board.push(null);
   }
 
   const getBoard = () => board;
 
-  const markCell = (row, column, token) => {
-    board[row][column] ||= token;
+  const markCell = (position, token) => {
+    board[position] ||= token;
   };
 
-  const getCell = (row, column) => board[row][column];
+  const getCell = (position) => {
+    return board[position] === null ? "_" : board[position];
+  };
 
-  const printBoard = () => console.table(board);
+  const printBoard = () => {
+    for (let i = 0; i < rows; i++) {
+      let row = ""; // String to build each row
+      for (let j = 0; j < columns; j++) {
+        row += getCell(i * columns + j) + " "; // Get cell value, add space
+      }
+      console.log(row);
+    }
+  };
 
   return { getBoard, markCell, getCell, printBoard };
 }
@@ -54,10 +61,48 @@ function GameController(
     console.log(`${getActivePlayer().name}'s turn.`);
   };
 
-  const playRound = (row, column) => {
-    board.markCell(row, column, getActivePlayer().token);
+  const checkWin = (token) => {
+    let win = false;
 
-    // TODO: Check for winner and handle with message
+    const winningCombinations = [
+      [0, 1, 2],
+      [3, 4, 5],
+      [6, 7, 8],
+      [0, 3, 6],
+      [1, 4, 7],
+      [2, 5, 8],
+      [0, 4, 8],
+      [2, 4, 6],
+    ];
+
+    let gameBoard = board.getBoard();
+    let line = [];
+    // Retrieve positions of token
+    for (let i = 0; i < gameBoard.length; i++) {
+      if (gameBoard[i] === token) {
+        line.push(i);
+      }
+    }
+
+    const includesAll = (array, values) =>
+      values.every((value) => array.includes(value));
+
+    // Check if the marked cells match a winning combination
+    for (const combination of winningCombinations) {
+      if (includesAll(line, combination)) {
+        win = true;
+      }
+    }
+    return win;
+  };
+
+  const playRound = (position) => {
+    board.markCell(position, getActivePlayer().token);
+
+    if (checkWin(getActivePlayer().token)) {
+      console.log(`${getActivePlayer().name} wins!`);
+      return;
+    }
 
     switchPlayerTurn();
     printNewRound();
