@@ -1,6 +1,4 @@
-function GameBoard() {
-  const rows = 3;
-  const columns = 3;
+function GameBoard(rows = 3, columns = 3) {
   const board = [];
 
   // Populate board with blank values
@@ -100,6 +98,7 @@ function GameController(
     board.markCell(position, getActivePlayer().token);
 
     if (checkWin(getActivePlayer().token)) {
+      board.printBoard();
       console.log(`${getActivePlayer().name} wins!`);
       return;
     }
@@ -118,4 +117,43 @@ function GameController(
   };
 }
 
+function DisplayController() {
+  const container = document.getElementById("container");
+
+  const createGrid = (rows, cols) => {
+    container.style.setProperty("--grid-rows", rows);
+    container.style.setProperty("--grid-cols", cols);
+    for (c = 0; c < rows * cols; c++) {
+      let cell = document.createElement("div");
+      cell.innerText = "";
+      container.appendChild(cell).className = "grid-item";
+    }
+  };
+
+  const displayMarkers = (board) => {
+    const gridItems = document.querySelectorAll(".grid-item");
+    for (let i = 0; i < gridItems.length; i++) {
+      gridItems[i].textContent = board[i];
+    }
+  };
+
+  createGrid(3, 3);
+
+  return {
+    displayMarkers,
+  };
+}
+
 const game = GameController();
+const display = DisplayController();
+
+const gridItems = document.querySelectorAll(".grid-item");
+gridItems.forEach((item, index) => {
+  item.addEventListener("click", () => {
+    if (item.innerText === "") {
+      game.playRound(index); // Pass the cell index to the game controller
+      display.displayMarkers(game.getBoard()); // Update the display
+    }
+    // TODO: Display result (win/loss/draw)
+  });
+});
