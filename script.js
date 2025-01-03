@@ -16,6 +16,21 @@ function GameBoard(rows = 3, columns = 3) {
     return board[position] === null ? "_" : board[position];
   };
 
+  const clearBoard = () => {
+    for (let i = 0; i < rows * columns; i++) {
+      board[i] = null;
+    }
+  };
+
+  const isFull = () => {
+    for (let i = 0; i < rows * columns; i++) {
+      if (board[i] === null) {
+        return false;
+      }
+    }
+    return true;
+  };
+
   const printBoard = () => {
     for (let i = 0; i < rows; i++) {
       let row = ""; // String to build each row
@@ -26,7 +41,7 @@ function GameBoard(rows = 3, columns = 3) {
     }
   };
 
-  return { getBoard, markCell, getCell, printBoard };
+  return { getBoard, markCell, getCell, clearBoard, isFull, printBoard };
 }
 
 function GameController(
@@ -47,12 +62,19 @@ function GameController(
   ];
 
   let activePlayer = players[0];
+  let gameOver = false;
 
   const switchPlayerTurn = () => {
     activePlayer = activePlayer === players[0] ? players[1] : players[0];
   };
 
   const getActivePlayer = () => activePlayer;
+
+  const setPlayerName = (player, name) => {
+    if (name !== null || name !== "") {
+      players[player - 1].name = name;
+    }
+  };
 
   const printNewRound = () => {
     board.printBoard();
@@ -95,11 +117,25 @@ function GameController(
   };
 
   const playRound = (position) => {
+    if (gameOver) {
+      console.log("Game over! Please start a new game.");
+      return;
+    }
+
     board.markCell(position, getActivePlayer().token);
 
     if (checkWin(getActivePlayer().token)) {
       board.printBoard();
       console.log(`${getActivePlayer().name} wins!`);
+      const winnerOutput = document.getElementById("result");
+      winnerOutput.innerText = getActivePlayer().name + " wins!";
+      gameOver = true;
+      return;
+    } else if (board.isFull()) {
+      board.printBoard();
+      console.log("It's a draw!");
+      const winnerOutput = document.getElementById("result");
+      winnerOutput.innerText = "It's a draw!";
       return;
     }
 
@@ -110,9 +146,21 @@ function GameController(
   // Initial prompt to start play
   printNewRound();
 
+  const resetButton = document.getElementById("reset-game");
+
+  resetButton.addEventListener("click", () => {
+    const winnerOutput = document.getElementById("result");
+    winnerOutput.innerText = "";
+    board.clearBoard();
+    display.displayMarkers(game.getBoard());
+    gameOver = false;
+    printNewRound();
+  });
+
   return {
     playRound,
     getActivePlayer,
+    setPlayerName,
     getBoard: board.getBoard,
   };
 }
@@ -154,6 +202,15 @@ gridItems.forEach((item, index) => {
       game.playRound(index); // Pass the cell index to the game controller
       display.displayMarkers(game.getBoard()); // Update the display
     }
-    // TODO: Display result (win/loss/draw)
   });
 });
+
+const playerOneInput = document.getElementById("player-one");
+const playerTwoInput = document.getElementById("player-two");
+
+playerOneInput.addEventListener("change", (e) =>
+  game.setPlayerName(1, e.target.value)
+);
+playerTwoInput.addEventListener("change", (e) =>
+  game.setPlayerName(2, e.target.value)
+);
